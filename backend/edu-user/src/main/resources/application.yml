@@ -3,3 +3,13 @@ spring:
     name: edu-user
   profiles:
     active: loc
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
