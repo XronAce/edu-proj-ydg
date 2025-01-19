@@ -24,6 +24,7 @@ public class GoodsController {
             GetGoodsResDto getGoodsResDto = goodsService.getGoods(goodsNo);
             return new ResponseEntity<>(getGoodsResDto, HttpStatus.OK);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -1,3 +1,6 @@
 app:
   run:
     type: local
+
+server:
+  port: 8081
