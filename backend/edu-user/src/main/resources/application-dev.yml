@@ -1,3 +1,9 @@
 app:
   run:
     type: dev
+
+goods-url: http://localhost:8081/api/v1/goods/
+
+logging:
+  level:
+    com.ktds: DEBUG

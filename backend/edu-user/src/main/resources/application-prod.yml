@@ -1,3 +1,9 @@
 app:
   run:
     type: prod
+
+goods-url: http://edu-goods-svc.edu-goods.svc.cluster.local:8081
+
+logging:
+  level:
+    com.ktds: DEBUG
