@@ -2,7 +2,7 @@ app:
   run:
     type: prod
 
-goods-url: http://edu-goods-svc.edu-goods.svc.cluster.local:8081/
+goods-url: http://edu-goods-svc.edu-goods.svc.cluster.local:8081/api/v1/goods/
 
 logging:
   level:
