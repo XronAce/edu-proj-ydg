@@ -2,7 +2,7 @@ app:
   run:
     type: prod
 
-goods-url: http://edu-goods-svc.edu-goods.svc.cluster.local:8081/api/v1/goods/
+goods-url: http://edu-goods.211.254.213.33.sslip.io/api/v1/goods/
 
 logging:
   level:

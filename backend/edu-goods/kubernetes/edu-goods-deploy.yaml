@@ -20,7 +20,7 @@ spec:
           imagePullPolicy: IfNotPresent        # k8s 클러스터에 다운로드 된 이미지 없으면 다운 or Always
           ports:
             - name: http
-              containerPort: 8080              # demo.jar 실행 포트
+              containerPort: 8081              # demo.jar 실행 포트
               protocol: TCP
           resources:                           # pod 사용 리소스 설정 블록
             requests:                          # 생성시 필요한 최소 리소스
@@ -48,7 +48,7 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 8080                        # deployment에서 설정한 컨테이너 포트 매핑
+      targetPort: 8081                        # deployment에서 설정한 컨테이너 포트 매핑
 
 ---
 apiVersion: networking.k8s.io/v1
