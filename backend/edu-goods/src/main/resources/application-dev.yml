@@ -4,3 +4,7 @@ app:
 
 server:
   port: 8081
+
+logging:
+  level:
+    com.ktds: DEBUG
