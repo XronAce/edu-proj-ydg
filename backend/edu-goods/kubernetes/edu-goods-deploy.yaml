@@ -34,9 +34,9 @@ spec:
               value: prod                      # 상용(prod) 환경
           livenessProbe:
             httpGet:
-              path: /healthz
+              path: /actuator/health
               port: 8081
-            initialDelaySeconds: 10
+            initialDelaySeconds: 30
             periodSeconds: 5
             timeoutSeconds: 1
             failureThreshold: 3
