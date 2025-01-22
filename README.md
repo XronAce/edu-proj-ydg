@@ -418,9 +418,127 @@ spec:
 ```
 
 ### 2.6. argoCD를 활용하여 배포
+#### 2.6.1. 인스턴스 별 manifests 생성
+- edu-goods  
+![alt text](/img/image-2.png)
+![alt text](/img/image-3.png)
+#### 2.6.2. argoCD에 application 생성
+![alt text](/img/image-4.png)
+#### 2.6.3. Synchronize 후 Pod 생성 확인
+- edu-goods: min 1pod, max 2pods autoscaled  
+![alt text](/img/image-5.png)
+- edu-user: min 2pods, max 4pods autoscaled  
+![alt text](/img/image-6.png)
+
 ### 2.7. 배포된 형상에서 인스턴스 별 API 호출 테스트 및 동작 확인
-### 2.8. istio sidecar injection을 통해 flow graph 기반으로 API 통신 과정 시각적 확인
+#### 2.7.1. edu-goods 외부 링크로 API 호출
+- [edu-goods.211.254.213.33.sslip.io/api/v1/goods/82273950](http://edu-goods.211.254.213.33.sslip.io/api/v1/goods/82273950)
+![alt text](/img/image.png)
+
+#### 2.7.2. edu-user 외부 링크로 API 호출
+- [http://edu-user.211.254.213.33.sslip.io/api/v1/user/82273950](http://edu-user.211.254.213.33.sslip.io/api/v1/user/82273950)
+![alt text](/img/image-1.png)
+- edu-user의 API 내부 로직에서는 FQDN을 통해 edu-goods를 내부 네트워크로 접근하여 호출.
 
 ## 3. HPA 설정 : edu-user(min:2, max:4), edu-goods(min:2, max:2)
+### 3.1. edu-user HPA autoscaling
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: edu-user-hpa
+  namespace: edu-user
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: edu-user-deploy
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 30
+```
+- CPU 평균 사용량이 30%를 초과할 시, scale-up 수행하고, 기본 설정값인 300초 동안 CPU 평균 사용량이 30% 이하일 시 scale down 된다.
+### 3.2. edu-goods HPA autoscaling
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: edu-goods-hpa
+  namespace: edu-goods
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: edu-goods-deploy
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 30
+```
+- 마찬가지로 CPU 평균 사용량 30% 기준으로 scaling이 이루어진다.
+- 기본적으로 HPA는 rke2에 기본적으로 설치된 metrics를 기반으로 하드웨어 리소스 점유율을 추적하여 작동한다.
 
 ## 4. probe 설정하여 pod 내 어플리케이션이 다운 되면 자동으로 pod start하게 설정(health check, self-healing)
+### 4.1. 각 애플리케이션에 health check용 API endpoint 구축
+- 편의를 위해 Spring의 actuator를 사용하고, CustomHealthIndicator를 구현하여 log를 남기도록 처리함으로써 작동 여부를 로그로 확인할 수 있도록 한다.
+```java
+package com.ktds.eduuser.config;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+public class CustomHealthIndicator implements HealthIndicator {
+
+    @Override
+    public Health health() {
+        log.debug("Health check called.");
+        return Health.up().build();
+    }
+}
+```
+- actuator 기본 내장 health API endpoint를 활용하되, 로그를 남기도록 커스터마이즈 진행.
+### 4.2. Spring actuator의 health API endpoint로 liveness Probe 설정
+- deployment.yaml 내에 liveness Probe 값을 설정한다.
+```yaml
+livenessProbe:
+  httpGet:
+    path: /actuator/health
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 1
+  failureThreshold: 3
+```
+- actuator 기본 내장 health API 경로는 /actuator/health이다.
+- initialDelaySeconds를 30초를 줌으로써 pod가 실행되어 pod 내 container로 애플리케이션이 완전히 작동할 때 까지 30초의 텀을 제공한 후, health check가 처리되도록 설정한다.
+### 4.3. actuator의 내장 health 실행을 위한 spring application.yml 편집
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+```
+- 해당 환경변수 설정을 통해 actuator의 health endpoint를 노출시킨다.
+### 4.4. 실제 health check 실행 여부를 pod 로그에서 확인
+![alt text](/img/image-7.png)
+- 설정했던 5초 주기로 health check를 하는 모습을 확인할 수 있다.
