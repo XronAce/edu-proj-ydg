@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edu-goods-deploy
+  namespace: edu-goods
+spec:
+  selector:
+    matchLabels:
+      app: edu-goods-app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: edu-goods-app
+        version: blue
+    spec:
+      containers:
+        - name: edu-goods-app
+          image: xronace/edu-goods:v0.0.1      # dockerhub image repository : repo/image명:Tag
+          imagePullPolicy: IfNotPresent        # k8s 클러스터에 다운로드 된 이미지 없으면 다운 or Always
+          ports:
+            - name: http
+              containerPort: 8081              # demo.jar 실행 포트
+              protocol: TCP
+          resources:                           # pod 사용 리소스 설정 블록
+            requests:                          # 생성시 필요한 최소 리소스
+              cpu: "1"
+              memory: "2Gi"
+            limits:                            # pod가 사용 가능한 최대 리소스
+              cpu: "1"
+              memory: "2Gi"
+          env:                                 # pod 내 환경 변수 설정
+            - name: SPRING_PROFILES_ACTIVE     # spring profile 설정
+              value: prod                      # 상용(prod) 환경
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 1
+            failureThreshold: 3
+      imagePullSecrets:                        # dockerhub 이미지 pull 위한 secret
+        - name: k8s-edu-dockerhub-secret

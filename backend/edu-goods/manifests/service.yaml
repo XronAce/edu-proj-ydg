@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: edu-goods-svc
+  namespace: edu-goods
+spec:
+  selector:
+    app: edu-goods-app
+    version: blue  # 기본적으로 Blue 배포에 연결
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8081                        # deployment에서 설정한 컨테이너 포트 매핑
