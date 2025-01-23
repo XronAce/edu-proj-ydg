@@ -493,7 +493,9 @@ spec:
 siege -c50 -t 30s http://edu-user.211.254.213.33.sslip.io/api/v1/user/1
 ```
 - siege를 통해 50유저가 30초간 지속적으로 서비스에 접근하면서 부하를 일으킨다.
-![alt text](/img/image-10.png)
+![alt text](/img/image-10.png)  
+- hpa에 describe 명령어를 통해 autoscaling 진행 로그를 확인할 수 있다.
+![alt text](/img/image-11.png)
 
 ## 4. probe 설정하여 pod 내 어플리케이션이 다운 되면 자동으로 pod start하게 설정(health check, self-healing)
 ### 4.1. 각 애플리케이션에 health check용 API endpoint 구축
